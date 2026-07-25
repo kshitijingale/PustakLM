@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import NotebookCard from "@/components/NotebookCard";
 import EmptyState from "@/components/EmptyState";
 import ThemeToggle from "@/components/ThemeToggle";
+import LogoutButton from "@/components/LogoutButton";
 
 type Notebook = { id: string; title: string; createdAt: string };
 
@@ -54,6 +55,7 @@ export default function HomePage() {
         </div>
         <div className="flex items-center gap-4">
           <ThemeToggle />
+          <LogoutButton />
         </div>
       </header>
 

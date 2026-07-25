@@ -5,6 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import ChatPanel from "@/components/ChatPanel";
 import ThemeToggle from "@/components/ThemeToggle";
 import type { Source } from "@/components/SourceCard";
+import LogoutButton from "@/components/LogoutButton";
 
 export default function NotebookPage({ params }: { params: { id: string } }) {
   const [sources, setSources] = useState<Source[]>([]);
@@ -35,6 +36,8 @@ export default function NotebookPage({ params }: { params: { id: string } }) {
       <header className="glass flex items-center justify-between px-6 py-3">
         <h1 className="text-sm font-medium text-parchment-100/70">📖💬 PustakLM</h1>
         <ThemeToggle />
+        <LogoutButton />
+        
       </header>
 
       <div className="flex flex-1 overflow-hidden">

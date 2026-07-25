@@ -23,6 +23,16 @@ export async function ensureUserCollection(collectionName: string) {
       vectors: { size: EMBEDDING_DIM, distance: "Cosine" },
     });
   }
+
+  // Qdrant requires an explicit payload index on any field you want to
+  // filter by (see searchChunks/deleteSourceChunks below). Without these,
+  // filtered search/delete throws "Index required but not found". Creating
+  // an index that already exists is a no-op, so this is safe to call every
+  // time - it also backfills indexes onto collections created before this
+  // fix was added.
+  await qdrant.createPayloadIndex(collectionName, { field_name: "notebookId", field_schema: "keyword" });
+  await qdrant.createPayloadIndex(collectionName, { field_name: "sourceId", field_schema: "keyword" });
+  
 }
 
 export type ChunkPayload = {
