@@ -10,10 +10,20 @@ import LogoutButton from "@/components/LogoutButton";
 export default function NotebookPage({ params }: { params: { id: string } }) {
   const [sources, setSources] = useState<Source[]>([]);
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const loadSources = useCallback(async () => {
-    const res = await fetch(`/api/sources?notebookId=${params.id}`);
-    if (res.ok) setSources((await res.json()).sources);
+    try {
+      const res = await fetch(`/api/sources?notebookId=${params.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setSources(Array.isArray(data.sources) ? data.sources : []);
+      }
+    } catch {
+      setSources([]);
+    } finally {
+      setLoading(false);
+    }
   }, [params.id]);
 
   useEffect(() => {
@@ -31,13 +41,26 @@ export default function NotebookPage({ params }: { params: { id: string } }) {
   const activeSource = sources.find((s) => s.id === activeSourceId) || null;
   const hasReadySources = sources.some((s) => s.status === "ready");
 
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-transparent">
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-6 py-5 text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-saffron-400/40 border-t-saffron-400" />
+          <div>
+            <p className="text-sm font-medium text-parchment-100">Loading notebook…</p>
+            <p className="text-xs text-parchment-100/50">Fetching sources and conversation history</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen flex-col">
       <header className="glass flex items-center justify-between px-6 py-3">
         <h1 className="text-sm font-medium text-parchment-100/70">📖💬 PustakLM</h1>
         <ThemeToggle />
         <LogoutButton />
-        
       </header>
 
       <div className="flex flex-1 overflow-hidden">

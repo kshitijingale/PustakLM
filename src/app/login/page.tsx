@@ -22,6 +22,24 @@ export default function LoginPage() {
     else setError((await res.json()).error || "Something went wrong");
   }
 
+  async function useDemoUser() {
+    setEmail("testuser@email.com");
+    setPassword("12345678");
+    setMode("login");
+    setError("");
+    setBusy(true);
+
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "testuser@email.com", password: "12345678" }),
+    });
+
+    setBusy(false);
+    if (res.ok) window.location.href = "/";
+    else setError((await res.json()).error || "Demo account sign-in failed");
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center px-4">
       <div className="card w-full max-w-sm p-8">
@@ -46,6 +64,14 @@ export default function LoginPage() {
           {error && <p className="text-sm text-red-400">{error}</p>}
           <button onClick={submit} disabled={busy} className="btn-primary w-full justify-center">
             {busy ? "…" : mode === "login" ? "Log in" : "Create account"}
+          </button>
+
+          <button
+            onClick={useDemoUser}
+            disabled={busy}
+            className="w-full justify-center rounded-xl border border-saffron-500/40 bg-saffron-500/10 px-3 py-2 text-sm text-saffron-300 transition hover:bg-saffron-500/20"
+          >
+            Use demo account
           </button>
         </div>
 

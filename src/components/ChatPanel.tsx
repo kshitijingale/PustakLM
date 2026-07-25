@@ -11,25 +11,44 @@ type ChatMessage = {
   content: string;
   citations: Citation[];
   streaming?: boolean;
+  createdAt?: string;
 };
 
 export default function ChatPanel({ notebookId, hasSources }: { notebookId: string; hasSources: boolean }) {
   const [msgs, setMsgs] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [openCitation, setOpenCitation] = useState<Citation | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  async function loadMessages() {
+    try {
+      setHistoryLoading(true);
+      const res = await fetch(`/api/chat?notebookId=${notebookId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data.messages)) {
+        const sorted = [...data.messages]
+          .map((m: any) => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+            citations: m.citations || [],
+            createdAt: m.createdAt,
+          }))
+          .sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+        setMsgs(sorted);
+      }
+    } catch {
+      // Ignore load failures and keep the current UI state.
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
   useEffect(() => {
-    fetch(`/api/chat?notebookId=${notebookId}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.messages) {
-          setMsgs(
-            data.messages.map((m: any) => ({ id: m.id, role: m.role, content: m.content, citations: m.citations || [] }))
-          );
-        }
-      });
+    loadMessages();
   }, [notebookId]);
 
   useEffect(() => {
@@ -97,13 +116,24 @@ export default function ChatPanel({ notebookId, hasSources }: { notebookId: stri
       copy[copy.length - 1] = { ...copy[copy.length - 1], streaming: false };
       return copy;
     });
+    await loadMessages();
     setLoading(false);
   }
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto px-6 py-4">
-        {msgs.length === 0 ? (
+        {historyLoading ? (
+          <div className="flex h-full items-center justify-center">
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-6 py-5 text-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-saffron-400/40 border-t-saffron-400" />
+              <div>
+                <p className="text-sm font-medium text-parchment-100">Loading conversation…</p>
+                <p className="text-xs text-parchment-100/50">Fetching your chat history</p>
+              </div>
+            </div>
+          </div>
+        ) : msgs.length === 0 ? (
           <EmptyState
             icon="💬"
             title={hasSources ? "Ask anything about your sources" : "Add a source to get started"}

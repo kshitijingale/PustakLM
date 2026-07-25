@@ -5,6 +5,7 @@ import { sources } from "../schema";
 import { chunkText } from "../chunk";
 import { embedTexts } from "../openai";
 import { ensureUserCollection, upsertChunks, type ChunkPayload } from "../qdrant";
+import { sanitizeText } from "../sanitize";
 import { extractPdf } from "./pdf";
 import { extractUrl } from "./url";
 import { extractYoutube } from "./youtube";
@@ -77,15 +78,20 @@ export async function indexSource(params: {
   await db.update(sources).set({ status: "indexing" }).where(eq(sources.id, sourceId));
 
   try {
-    const { segments, title, metadata } = await extractSegments(type, originRef, rawText);
+    const sanitizedRawText = sanitizeText(rawText);
+    const { segments, title, metadata } = await extractSegments(type, originRef, sanitizedRawText);
     const finalTitle = titleOverride || title;
 
     // Flatten every segment into chunks, keeping the segment's locator
     // (page / timestamp) attached to every chunk that comes from it.
     const chunks: { text: string; page?: number; timestamp?: number }[] = [];
     for (const seg of segments) {
-      const pieces = await chunkText(seg.text);
-      for (const piece of pieces) chunks.push({ text: piece, page: seg.page, timestamp: seg.timestamp });
+      const safeText = sanitizeText(seg.text);
+      const pieces = await chunkText(safeText);
+      for (const piece of pieces) {
+        const safePiece = sanitizeText(piece);
+        chunks.push({ text: safePiece, page: seg.page, timestamp: seg.timestamp });
+      }
     }
 
     if (!chunks.length) throw new Error("No extractable content found in this source.");
@@ -99,10 +105,10 @@ export async function indexSource(params: {
       payload: {
         notebookId,
         sourceId,
-        sourceTitle: finalTitle,
+        sourceTitle: sanitizeText(finalTitle),
         sourceType: type,
         chunkIndex: i,
-        text: c.text,
+        text: sanitizeText(c.text),
         page: c.page,
         timestamp: c.timestamp,
       } satisfies ChunkPayload,
