@@ -1,14 +1,32 @@
 // Drizzle ORM schema. Run `npm run db:push` after setting DATABASE_URL to create these tables in Neon.
-import { pgTable, text, timestamp, uuid, integer, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, integer, jsonb, uniqueIndex } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   email: text("email").notNull().unique(),
-  passwordHash: text("password_hash").notNull(),
+  // nullable: OAuth-only accounts (Google/GitHub) have no password
+  passwordHash: text("password_hash"),
   // every user gets their own Qdrant collection name, e.g. "user_<id>"
   qdrantCollection: text("qdrant_collection").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// Links a user to their identity at an OAuth provider. One row per
+// (provider, providerAccountId) — a single user can have both Google and
+// GitHub linked, and one provider account maps to exactly one user.
+export const oauthAccounts = pgTable(
+  "oauth_accounts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull(), // "google" | "github"
+    providerAccountId: text("provider_account_id").notNull(), // Google "sub" / GitHub "id"
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    providerAccount: uniqueIndex("oauth_accounts_provider_account_idx").on(t.provider, t.providerAccountId),
+  })
+);
 
 export const notebooks = pgTable("notebooks", {
   id: uuid("id").defaultRandom().primaryKey(),

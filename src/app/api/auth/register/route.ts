@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-import { v4 as uuidv4 } from "uuid";
 import { db } from "@/lib/db";
 import { users } from "@/lib/schema";
 import { signSession, sessionCookieOptions } from "@/lib/auth";
-import { ensureUserCollection } from "@/lib/qdrant";
+import { createUser } from "@/lib/users";
 import { rateLimit } from "@/lib/ratelimit";
 
 export async function POST(req: NextRequest) {
@@ -22,13 +21,8 @@ export async function POST(req: NextRequest) {
   if (existing) return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const qdrantCollection = `user_${uuidv4()}`;
-
-  // Every user gets an isolated Qdrant collection created up-front, so their
-  // notebooks' vectors never mix with any other user's data.
-  await ensureUserCollection(qdrantCollection);
-
-  const [user] = await db.insert(users).values({ email, passwordHash, qdrantCollection }).returning();
+  // Provisions the user's isolated Qdrant collection as part of sign-up.
+  const user = await createUser(email, passwordHash);
 
   const token = signSession(user.id);
   const res = NextResponse.json({ ok: true });

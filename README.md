@@ -51,6 +51,7 @@ src/
     notebook/[id]/page.tsx     # workspace: sources sidebar + chat
     api/
       auth/{login,register}    # session cookie (JWT)
+      auth/oauth/[provider]    # Google/GitHub sign-in (+ /callback)
       notebooks/                # CRUD
       sources/                  # add / list / delete / re-index
       chat/                     # retrieval + streaming grounded answer
@@ -60,6 +61,8 @@ src/
     openai.ts                  # embeddings + chat client
     chunk.ts                   # LangChain text splitter wrapper
     auth.ts                    # JWT session helpers
+    oauth.ts                   # Google/GitHub OAuth 2.0 (state, token exchange, profile)
+    users.ts                   # shared user provisioning (OAuth find-or-create + Qdrant)
     ratelimit.ts                # guardrails (rate limit, SSRF guard, size limits)
     ingest/
       pdf.ts, url.ts, youtube.ts, vtt.ts   # per-type extraction
@@ -115,7 +118,9 @@ the transcript cue — so you always know exactly where an answer came from.
   private `192.168.x`/`10.x` addresses before fetching.
 - **Prompt-injection guardrail**: the system prompt explicitly tells the model to treat
   retrieved excerpts as data, never as instructions.
-- **Auth**: JWT session cookie (httpOnly, sameSite=lax); every API route re-checks the session
+- **Auth**: JWT session cookie (httpOnly, sameSite=lax) issued by either email/password
+  (bcrypt) or Google/GitHub OAuth 2.0 (`/api/auth/oauth/[provider]`, CSRF `state` cookie,
+  verified-email-only account linking); every API route re-checks the session
   and re-verifies notebook/source ownership before touching data.
 
 These are meant to be a reasonable baseline, not a production security audit — see

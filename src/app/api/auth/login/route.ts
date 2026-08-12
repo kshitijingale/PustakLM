@@ -12,8 +12,22 @@ export async function POST(req: NextRequest) {
   if (!limited.ok) return NextResponse.json({ error: "Too many attempts" }, { status: 429 });
 
   const { email, password } = await req.json();
+  if (!email || !password) {
+    return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
+  }
+
   const [user] = await db.select().from(users).where(eq(users.email, email));
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+  if (!user) {
+    return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+  }
+
+  // OAuth-only accounts have no password — point them at the right button
+  // instead of letting bcrypt.compare blow up on a null hash.
+  if (!user.passwordHash) {
+    return NextResponse.json({ error: "This account uses Google/GitHub sign-in" }, { status: 401 });
+  }
+
+  if (!(await bcrypt.compare(password, user.passwordHash))) {
     return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
   }
 
