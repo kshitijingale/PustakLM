@@ -1,43 +1,78 @@
 "use client";
 
+import { motion } from "framer-motion";
+import { X, ExternalLink, FileText } from "lucide-react";
 import type { Citation } from "./CitationBadge";
+import { Button } from "@/components/ui/Button";
 
-// Selecting a citation opens this panel, "highlighting" the cited chunk and
-// giving a link to jump into the original source (PDF page / YouTube
-// timestamp / website / transcript position) as required by the spec.
 export default function SourceViewer({ citation, onClose }: { citation: Citation; onClose: () => void }) {
   const youtubeLink =
     citation.sourceType === "youtube" && citation.timestamp != null
-      ? `#t=${citation.timestamp}` // in a full build: youtube.com/watch?v=<id>&t=<timestamp>s
+      ? `#t=${citation.timestamp}`
       : null;
 
   return (
-    <div className="fixed inset-y-0 right-0 z-40 w-full max-w-md animate-fadeUp border-l border-white/10 bg-ink-900 p-5 shadow-soft">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-medium">Source</h3>
-        <button onClick={onClose} className="text-parchment-100/50 hover:text-parchment-50">
-          ✕
-        </button>
-      </div>
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+      />
+      <motion.div
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="fixed inset-y-0 right-0 z-50 w-full max-w-md border-l border-border bg-surface shadow-soft"
+      >
+        <div className="flex h-full flex-col p-6">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15 text-accent">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-serif font-semibold tracking-tight text-fg">Source</h3>
+                <p className="text-xs text-fg-tertiary capitalize">{citation.sourceType}</p>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
 
-      <div className="mb-3 flex items-center gap-2 text-sm text-parchment-100/60">
-        <span className="uppercase tracking-wide">{citation.sourceType}</span>
-        {citation.page != null && <span>· Page {citation.page}</span>}
-        {citation.timestamp != null && <span>· {Math.floor(citation.timestamp / 60)}:{(citation.timestamp % 60).toString().padStart(2, "0")}</span>}
-      </div>
+          <div className="mb-4 flex flex-wrap gap-2 text-xs font-medium uppercase tracking-wider text-fg-secondary">
+            {citation.page != null && <span>Page {citation.page}</span>}
+            {citation.timestamp != null && (
+              <span>{Math.floor(citation.timestamp / 60)}:{(citation.timestamp % 60).toString().padStart(2, "0")}</span>
+            )}
+          </div>
 
-      <h4 className="mb-3 font-medium">{citation.sourceTitle}</h4>
+          <h4 className="mb-4 font-serif text-lg font-semibold tracking-tight text-fg">
+            {citation.sourceTitle}
+          </h4>
 
-      {/* Highlighted cited chunk - the exact excerpt the answer was grounded in */}
-      <div className="rounded-xl border border-saffron-500/30 bg-saffron-500/10 p-4 text-sm leading-relaxed">
-        {citation.chunkText}
-      </div>
+          <div className="flex-1 overflow-y-auto">
+            <div className="rounded-2xl border border-accent/20 bg-accent/5 p-5 text-sm leading-relaxed text-fg-secondary">
+              <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-accent">
+                Cited passage
+              </span>
+              {citation.chunkText}
+            </div>
+          </div>
 
-      {youtubeLink && (
-        <a href={youtubeLink} target="_blank" className="btn-ghost mt-4 inline-flex">
-          ▶️ Jump to timestamp
-        </a>
-      )}
-    </div>
+          {youtubeLink && (
+            <Button variant="secondary" className="mt-4 w-full" asChild>
+              <a href={youtubeLink} target="_blank" rel="noreferrer">
+                <ExternalLink className="h-4 w-4" />
+                Jump to timestamp
+              </a>
+            </Button>
+          )}
+        </div>
+      </motion.div>
+    </>
   );
 }

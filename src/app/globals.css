@@ -3,54 +3,131 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Dark theme (default) */
+    --bg: 22 20 18;
+    --bg-subtle: 26 24 21;
+    --surface: 31 29 27;
+    --surface-elevated: 38 36 34;
+    --surface-highlight: 46 43 40;
+    --border: 54 50 45;
+    --border-subtle: 42 39 36;
+    --fg: 242 239 233;
+    --fg-secondary: 167 162 154;
+    --fg-tertiary: 122 117 109;
+    --accent: 232 123 53;
+    --accent-hover: 240 138 69;
+    --accent-strong: 255 157 92;
+    --accent-muted: 232 123 53 0.12;
+    --success: 52 211 153;
+    --warning: 251 191 36;
+    --error: 248 113 113;
+  }
+
+  html.light {
+    /* Light theme — warm paper palette */
+    --bg: 250 246 238;
+    --bg-subtle: 245 240 230;
+    --surface: 255 255 255;
+    --surface-elevated: 249 246 240;
+    --surface-highlight: 240 235 224;
+    --border: 232 224 213;
+    --border-subtle: 240 235 224;
+    --fg: 31 31 31;
+    --fg-secondary: 95 99 104;
+    --fg-tertiary: 154 149 141;
+    --accent: 217 108 0;
+    --accent-hover: 194 95 0;
+    --accent-strong: 232 112 0;
+    --accent-muted: 217 108 0 0.12;
+    --success: 5 150 105;
+    --warning: 217 119 6;
+    --error: 220 38 38;
+  }
+
   html {
     color-scheme: dark;
   }
-  body {
-    @apply bg-ink-950 text-parchment-50 antialiased;
+  html.light {
+    color-scheme: light;
   }
-  html.light body {
-    @apply bg-parchment-50 text-ink-950;
+  body {
+    @apply bg-bg text-fg antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Focus ring */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-accent/50 ring-offset-2 ring-offset-bg;
   }
 }
 
 @layer components {
   .glass {
-    @apply backdrop-blur-md bg-white/5 border border-white/10 shadow-glass;
-  }
-  html.light .glass {
-    @apply bg-white/60 border-black/5;
+    @apply backdrop-blur-xl bg-surface/70 border border-border/60 shadow-glass;
   }
 
   .card {
-    @apply rounded-2xl border border-white/10 bg-ink-900/60 shadow-soft;
-  }
-  html.light .card {
-    @apply border-black/5 bg-white shadow-soft;
+    @apply rounded-2xl border border-border bg-surface shadow-soft;
   }
 
+  .btn-base {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium
+      transition-all duration-200 active:scale-[0.97]
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg
+      disabled:pointer-events-none disabled:opacity-50;
+  }
   .btn-primary {
-    @apply inline-flex items-center gap-2 rounded-xl bg-saffron-500 px-4 py-2 text-sm font-medium text-ink-950
-      transition-transform hover:bg-saffron-400 active:scale-95;
+    @apply btn-base bg-accent text-white shadow-glow hover:bg-accent-hover;
+  }
+  .btn-secondary {
+    @apply btn-base bg-surface-elevated text-fg border border-border hover:bg-surface-highlight;
   }
   .btn-ghost {
-    @apply inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm font-medium
-      text-parchment-100 transition-colors hover:bg-white/5 active:scale-95;
+    @apply btn-base text-fg-secondary hover:bg-surface-elevated hover:text-fg;
   }
-  html.light .btn-ghost {
-    @apply border-black/10 text-ink-900 hover:bg-black/5;
+  .btn-danger {
+    @apply btn-base text-error hover:bg-error/10;
   }
 
+  .input {
+    @apply w-full rounded-xl border border-border bg-surface-elevated px-3.5 py-2.5 text-sm
+      text-fg placeholder:text-fg-tertiary
+      transition-all duration-200
+      hover:border-border/80
+      focus:border-accent/50 focus:ring-2 focus:ring-accent/15 focus:outline-none;
+  }
+
+  .textarea {
+    @apply input min-h-[120px] resize-y;
+  }
+
+  /* Status dots */
   .dot-indexing {
-    @apply h-2.5 w-2.5 rounded-full bg-saffron-500 animate-pulse;
+    @apply h-2 w-2 rounded-full bg-warning animate-pulse;
   }
   .dot-ready {
-    @apply h-2.5 w-2.5 rounded-full bg-emerald-500;
+    @apply h-2 w-2 rounded-full bg-success;
   }
   .dot-failed {
-    @apply h-2.5 w-2.5 rounded-full bg-red-500;
+    @apply h-2 w-2 rounded-full bg-error;
   }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-fg-tertiary/40; }
+
+  /* Selection */
+  ::selection { @apply bg-accent/30; }
 }
 
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { @apply bg-white/10 rounded-full; }
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Moon, Sun } from "lucide-react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ className }: { className?: string }) {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const saved = (localStorage.getItem("pustaklm-theme") as "dark" | "light") || "dark";
     setTheme(saved);
   }, []);
@@ -18,19 +23,35 @@ export default function ThemeToggle() {
     setTheme(next);
   }
 
+  if (!mounted) {
+    return (
+      <button
+        aria-label="Toggle theme"
+        className={cn(
+          "relative h-9 w-16 rounded-full border border-border bg-surface-elevated",
+          className
+        )}
+      />
+    );
+  }
+
   return (
     <button
       onClick={toggle}
       aria-label="Toggle theme"
-      className="relative h-8 w-16 rounded-full border border-white/10 bg-white/5 transition-colors"
+      className={cn(
+        "relative h-9 w-16 rounded-full border border-border bg-surface-elevated transition-colors hover:bg-surface-highlight",
+        className
+      )}
     >
-      <span
-        className="absolute top-1 flex h-6 w-6 items-center justify-center rounded-full bg-saffron-500 text-xs
-          transition-all duration-300 ease-out"
-        style={{ left: theme === "dark" ? "4px" : "calc(100% - 28px)" }}
+      <motion.span
+        initial={false}
+        animate={{ x: theme === "dark" ? 4 : 34 }}
+        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        className="absolute top-1 flex h-7 w-7 items-center justify-center rounded-full bg-accent text-white shadow-sm"
       >
-        {theme === "dark" ? "🌙" : "☀️"}
-      </span>
+        {theme === "dark" ? <Moon className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />}
+      </motion.span>
     </button>
   );
 }

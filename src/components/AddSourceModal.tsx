@@ -1,13 +1,25 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FileText, Type, Globe, Video, Subtitles, ArrowLeft, Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { cn } from "@/lib/utils";
 
 const TYPES = [
-  { key: "pdf", label: "PDF", icon: "📄" },
-  { key: "text", label: "Text", icon: "📝" },
-  { key: "url", label: "Web Link", icon: "🌐" },
-  { key: "youtube", label: "YT Link", icon: "▶️" },
-  { key: "vtt", label: "VTT", icon: "🗒️" },
+  { key: "pdf", label: "PDF", icon: FileText, desc: "Upload a document" },
+  { key: "text", label: "Text", icon: Type, desc: "Paste plain text" },
+  { key: "url", label: "Web Link", icon: Globe, desc: "Article or page" },
+  { key: "youtube", label: "YouTube", icon: Video, desc: "Video transcript" },
+  { key: "vtt", label: "VTT", icon: Subtitles, desc: "Caption file" },
 ];
 
 export default function AddSourceModal({
@@ -56,71 +68,92 @@ export default function AddSourceModal({
     }
   }
 
+  const selectedType = TYPES.find((t) => t.key === type);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="card relative w-full max-w-lg p-6 animate-fadeUp">
-        <h2 className="mb-4 text-lg font-medium">Add Source</h2>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent contentClassName="max-w-md p-0">
+        <div className="p-6">
+          <DialogHeader>
+            <DialogTitle>{type ? selectedType?.label : "Add Source"}</DialogTitle>
+          </DialogHeader>
 
-        {!type ? (
-          <div className="grid grid-cols-3 gap-3">
-            {TYPES.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setType(t.key)}
-                className="flex flex-col items-center gap-2 rounded-xl border border-white/10 py-6 hover:bg-white/5"
+          <AnimatePresence mode="wait">
+            {!type ? (
+              <motion.div
+                key="grid"
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 12 }}
+                transition={{ duration: 0.15 }}
+                className="mt-4 grid grid-cols-2 gap-3"
               >
-                <span className="text-2xl">{t.icon}</span>
-                <span className="text-sm">{t.label}</span>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {type === "text" && (
-              <textarea
-                autoFocus
-                rows={8}
-                placeholder="Paste or write your text here..."
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-transparent p-3 text-sm outline-none focus:border-saffron-500/50"
-              />
-            )}
-            {(type === "url" || type === "youtube") && (
-              <input
-                autoFocus
-                placeholder={type === "youtube" ? "https://youtube.com/watch?v=..." : "https://example.com/article"}
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-transparent p-3 text-sm outline-none focus:border-saffron-500/50"
-              />
-            )}
-            {(type === "pdf" || type === "vtt") && (
-              <input
-                type="file"
-                accept={type === "pdf" ? "application/pdf" : "text/vtt"}
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                className="w-full text-sm"
-              />
-            )}
+                {TYPES.map((t) => (
+                  <button
+                    key={t.key}
+                    onClick={() => setType(t.key)}
+                    className="group flex flex-col items-start gap-2 rounded-xl border border-border bg-surface-elevated p-4 text-left transition-all duration-200 hover:border-accent/30 hover:bg-surface-highlight active:scale-[0.98]"
+                  >
+                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/15 text-accent transition-transform duration-200 group-hover:scale-110">
+                      <t.icon className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium text-fg">{t.label}</p>
+                      <p className="text-xs text-fg-tertiary">{t.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </motion.div>
+            ) : (
+              <motion.div
+                key="form"
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -12 }}
+                transition={{ duration: 0.15 }}
+                className="mt-4 space-y-4"
+              >
+                {type === "text" && (
+                  <Textarea
+                    autoFocus
+                    rows={8}
+                    placeholder="Paste or write your text here..."
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                  />
+                )}
+                {(type === "url" || type === "youtube") && (
+                  <Input
+                    autoFocus
+                    placeholder={type === "youtube" ? "https://youtube.com/watch?v=..." : "https://example.com/article"}
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                  />
+                )}
+                {(type === "pdf" || type === "vtt") && (
+                  <Input
+                    type="file"
+                    accept={type === "pdf" ? "application/pdf" : "text/vtt"}
+                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  />
+                )}
 
-            {error && <p className="text-sm text-red-400">{error}</p>}
+                {error && <p className="text-sm text-error">{error}</p>}
 
-            <div className="flex justify-between pt-2">
-              <button className="btn-ghost" onClick={() => setType(null)}>
-                Back
-              </button>
-              <button className="btn-primary" disabled={busy} onClick={submit}>
-                {busy ? "Adding…" : "Add Source"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        <button onClick={onClose} className="absolute right-4 top-4 text-parchment-100/50 hover:text-parchment-50">
-          ✕
-        </button>
-      </div>
-    </div>
+                <div className="flex justify-between pt-2">
+                  <Button variant="ghost" onClick={() => setType(null)} disabled={busy}>
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
+                  </Button>
+                  <Button disabled={busy} onClick={submit}>
+                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add Source"}
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

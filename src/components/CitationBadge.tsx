@@ -22,10 +22,15 @@ export default function CitationBadge({ citation, onOpen }: { citation: Citation
   return (
     <button
       onClick={onOpen}
-      className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-xs
-        text-parchment-100/80 transition-colors hover:border-saffron-500/50 hover:text-saffron-400"
+      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-elevated px-2.5 py-1 text-xs
+        text-fg-secondary transition-all duration-200 hover:-translate-y-px hover:border-accent/40
+        hover:bg-accent/10 hover:text-accent"
     >
-      [{citation.index}] {citation.sourceTitle} {locator && <span className="text-parchment-100/40">· {locator}</span>}
+      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-accent/15 text-[10px] font-semibold text-accent">
+        {citation.index}
+      </span>
+      <span className="max-w-[140px] truncate">{citation.sourceTitle}</span>
+      {locator && <span className="text-fg-tertiary">· {locator}</span>}
     </button>
   );
 }

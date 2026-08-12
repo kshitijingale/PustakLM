@@ -2,6 +2,17 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { BookOpen, Calendar, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/DropdownMenu";
+import RenameNotebookDialog from "@/components/RenameNotebookDialog";
+import DeleteNotebookDialog from "@/components/DeleteNotebookDialog";
+import { cn } from "@/lib/utils";
 
 export default function NotebookCard({
   notebook,
@@ -12,50 +23,70 @@ export default function NotebookCard({
   onDelete: (id: string) => void;
   onRename: (id: string, title: string) => void;
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [showRename, setShowRename] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
 
   return (
-    <div className="card group relative p-5 transition-transform hover:-translate-y-0.5">
-      <Link href={`/notebook/${notebook.id}`} className="block">
-        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-400">
-          📖
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -4 }}
+      transition={{ type: "spring", stiffness: 350, damping: 25 }}
+      className="group card relative overflow-hidden p-5 transition-shadow duration-300 hover:shadow-glow"
+    >
+      <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-accent/5 blur-2xl transition-opacity group-hover:opacity-100" />
+      <Link href={`/notebook/${notebook.id}`} className="relative block">
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/15 text-accent shadow-sm transition-transform duration-300 group-hover:scale-105 group-hover:shadow-glow">
+          <BookOpen className="h-6 w-6" />
         </div>
-        <h3 className="truncate font-medium">{notebook.title}</h3>
-        <p className="mt-1 text-xs text-parchment-100/50">
-          {new Date(notebook.createdAt).toLocaleDateString()}
-        </p>
+        <h3 className="truncate font-serif text-lg font-semibold tracking-tight text-fg">
+          {notebook.title}
+        </h3>
+        <div className="mt-2 flex items-center gap-1.5 text-xs text-fg-tertiary">
+          <Calendar className="h-3.5 w-3.5" />
+          {new Date(notebook.createdAt).toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })}
+        </div>
       </Link>
 
-      <button
-        onClick={() => setMenuOpen((v) => !v)}
-        className="absolute right-3 top-3 rounded-lg px-2 py-1 text-parchment-100/50 opacity-0 hover:bg-white/5 group-hover:opacity-100"
-      >
-        ⋯
-      </button>
-
-      {menuOpen && (
-        <div className="absolute right-3 top-10 z-10 w-32 rounded-xl border border-white/10 bg-ink-800 p-1 shadow-soft">
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild>
           <button
-            className="block w-full rounded-lg px-3 py-1.5 text-left text-sm hover:bg-white/5"
-            onClick={() => {
-              const title = prompt("Rename notebook", notebook.title);
-              if (title) onRename(notebook.id, title);
-              setMenuOpen(false);
-            }}
+            className="absolute right-3 top-3 rounded-lg p-1.5 text-fg-tertiary transition-all hover:bg-surface-elevated hover:text-fg focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
+            onClick={(e) => e.preventDefault()}
           >
+            <MoreVertical className="h-4 w-4" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-36">
+          <DropdownMenuItem onClick={() => setShowRename(true)}>
+            <Pencil className="mr-2 h-3.5 w-3.5" />
             Rename
-          </button>
-          <button
-            className="block w-full rounded-lg px-3 py-1.5 text-left text-sm text-red-400 hover:bg-white/5"
-            onClick={() => {
-              if (confirm(`Delete "${notebook.title}"? This cannot be undone.`)) onDelete(notebook.id);
-              setMenuOpen(false);
-            }}
-          >
+          </DropdownMenuItem>
+          <DropdownMenuItem destructive onClick={() => setShowDelete(true)}>
+            <Trash2 className="mr-2 h-3.5 w-3.5" />
             Delete
-          </button>
-        </div>
-      )}
-    </div>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <RenameNotebookDialog
+        notebookId={notebook.id}
+        open={showRename}
+        onOpenChange={setShowRename}
+        currentTitle={notebook.title}
+        onRenamed={(title) => onRename(notebook.id, title)}
+      />
+      <DeleteNotebookDialog
+        notebookId={notebook.id}
+        title={notebook.title}
+        open={showDelete}
+        onOpenChange={setShowDelete}
+        onDeleted={() => onDelete(notebook.id)}
+      />
+    </motion.div>
   );
 }
