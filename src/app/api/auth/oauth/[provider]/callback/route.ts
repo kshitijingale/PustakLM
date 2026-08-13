@@ -6,6 +6,7 @@ import {
   getProviderConfig,
   isOAuthProvider,
   oauthStateCookieOptions,
+  resolveBaseUrl,
 } from "@/lib/oauth";
 import { findOrCreateOAuthUser } from "@/lib/users";
 
@@ -42,7 +43,9 @@ export async function GET(req: NextRequest, { params }: { params: { provider: st
     const config = getProviderConfig(params.provider);
     if (!config) return fail("oauth_not_configured");
 
-    const accessToken = await exchangeCodeForToken(params.provider, code);
+    // The provider redirects the browser back to exactly the redirect_uri we
+    // sent, so this resolves to the same base URL used in the authorize step.
+    const accessToken = await exchangeCodeForToken(params.provider, code, resolveBaseUrl(req));
     const profile = await config.fetchProfile(accessToken);
     if (!profile) return fail("oauth_no_email");
 

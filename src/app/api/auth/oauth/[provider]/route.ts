@@ -5,6 +5,7 @@ import {
   getProviderConfig,
   isOAuthProvider,
   oauthStateCookieOptions,
+  resolveBaseUrl,
 } from "@/lib/oauth";
 import { rateLimit } from "@/lib/ratelimit";
 
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest, { params }: { params: { provider: st
   if (!getProviderConfig(params.provider)) return loginError("oauth_not_configured");
 
   const state = generateOAuthState();
-  const res = NextResponse.redirect(buildAuthorizeUrl(params.provider, state));
+  const res = NextResponse.redirect(buildAuthorizeUrl(params.provider, state, resolveBaseUrl(req)));
   res.cookies.set(oauthStateCookieOptions().name, state, oauthStateCookieOptions());
   return res;
 }

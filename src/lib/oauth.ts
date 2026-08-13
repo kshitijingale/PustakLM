@@ -1,3 +1,5 @@
+import type { NextRequest } from "next/server";
+
 // Hand-rolled OAuth 2.0 (authorization-code flow) for Google and GitHub.
 // No extra dependencies: both providers expose standard OAuth endpoints, and
 // the session stays our own JWT cookie (see src/lib/auth.ts) — these helpers
@@ -13,7 +15,14 @@ export type OAuthProvider = "google" | "github";
 
 export const OAUTH_STATE_COOKIE = "pustaklm_oauth_state";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+// The OAuth redirect_uri must live on the same host the user started the
+// flow from — otherwise the provider bounces them to a different host and
+// the state cookie (our CSRF guard) never round-trips. NEXT_PUBLIC_APP_URL
+// wins when set (canonical host); otherwise we use the incoming request's
+// origin, so localhost, Vercel prod, and preview deployments all just work.
+export function resolveBaseUrl(req: NextRequest) {
+  return (process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin).replace(/\/+$/, "");
+}
 
 export type OAuthProfile = {
   providerAccountId: string; // stable id at the provider (Google "sub", GitHub "id")
@@ -34,8 +43,8 @@ export function isOAuthProvider(value: string): value is OAuthProvider {
   return value === "google" || value === "github";
 }
 
-export function callbackUrl(provider: OAuthProvider) {
-  return `${APP_URL}/api/auth/oauth/${provider}/callback`;
+export function callbackUrl(provider: OAuthProvider, baseUrl: string) {
+  return `${baseUrl}/api/auth/oauth/${provider}/callback`;
 }
 
 // Returns null when the provider's env vars aren't set, so routes can fail
@@ -70,12 +79,12 @@ export function getProviderConfig(provider: OAuthProvider): ProviderConfig | nul
   };
 }
 
-export function buildAuthorizeUrl(provider: OAuthProvider, state: string) {
+export function buildAuthorizeUrl(provider: OAuthProvider, state: string, baseUrl: string) {
   const config = getProviderConfig(provider);
   if (!config) throw new Error(`OAuth provider "${provider}" is not configured`);
   const params = new URLSearchParams({
     client_id: config.clientId,
-    redirect_uri: callbackUrl(provider),
+    redirect_uri: callbackUrl(provider, baseUrl),
     response_type: "code",
     scope: config.scope,
     state,
@@ -84,7 +93,7 @@ export function buildAuthorizeUrl(provider: OAuthProvider, state: string) {
 }
 
 
-export async function exchangeCodeForToken(provider: OAuthProvider, code: string): Promise<string> {
+export async function exchangeCodeForToken(provider: OAuthProvider, code: string, baseUrl: string): Promise<string> {
   const config = getProviderConfig(provider);
   if (!config) throw new Error(`OAuth provider "${provider}" is not configured`);
 
@@ -95,7 +104,7 @@ export async function exchangeCodeForToken(provider: OAuthProvider, code: string
       client_id: config.clientId,
       client_secret: config.clientSecret,
       code,
-      redirect_uri: callbackUrl(provider),
+      redirect_uri: callbackUrl(provider, baseUrl),
       grant_type: "authorization_code",
     }),
   });
