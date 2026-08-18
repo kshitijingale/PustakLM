@@ -12,14 +12,14 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
-export default function RenameNotebookDialog({
-  notebookId,
+export default function RenameWorkspaceDialog({
+  workspaceId,
   open,
   onOpenChange,
   currentTitle,
   onRenamed,
 }: {
-  notebookId: string;
+  workspaceId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentTitle: string;
@@ -35,7 +35,7 @@ export default function RenameNotebookDialog({
   async function rename() {
     if (!title.trim() || busy) return;
     setBusy(true);
-    const res = await fetch(`/api/notebooks/${notebookId}`, {
+    const res = await fetch(`/api/workspaces/${workspaceId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: title.trim() }),
@@ -51,15 +51,15 @@ export default function RenameNotebookDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent contentClassName="max-w-md">
         <DialogHeader>
-          <DialogTitle>Rename notebook</DialogTitle>
+          <DialogTitle>Rename workspace</DialogTitle>
           <DialogDescription>
-            Change the name of your notebook.
+            Change the name of your workspace.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <Input
             autoFocus
-            placeholder="Notebook title"
+            placeholder="Workspace title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && rename()}

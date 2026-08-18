@@ -19,11 +19,49 @@ type ChatMessage = {
 	createdAt?: string;
 };
 
+function renderContentWithCitations(
+	content: string,
+	citations: Citation[],
+	onOpen: (c: Citation) => void
+) {
+	const citationMap = new Map(citations.map((c) => [c.index, c]));
+	const parts = content.split(/(\[\d+\])/g);
+	return parts.map((part, i) => {
+		const match = part.match(/^\[(\d+)\]$/);
+		if (match) {
+			const index = Number(match[1]);
+			const citation = citationMap.get(index);
+			if (citation) {
+				return (
+					<button
+						key={`${i}-${index}`}
+						onClick={() => onOpen(citation)}
+						className="relative -top-0.5 mx-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-accent/15 text-[10px] font-semibold text-accent transition-colors hover:bg-accent/25"
+						aria-label={`Open citation ${index}`}
+					>
+						{index}
+					</button>
+				);
+			}
+		}
+		return <span key={i}>{part}</span>;
+	});
+}
+
+function updateLastAssistant(
+	messages: ChatMessage[],
+	patch: (last: ChatMessage) => ChatMessage,
+): ChatMessage[] {
+	const last = messages[messages.length - 1];
+	if (!last || last.role !== "assistant") return messages;
+	return [...messages.slice(0, -1), patch(last)];
+}
+
 function ChatPanel({
-	notebookId,
+	workspaceId,
 	hasSources,
 }: {
-	notebookId: string;
+	workspaceId: string;
 	hasSources: boolean;
 }) {
 	const [msgs, setMsgs] = useState<ChatMessage[]>([]);
@@ -37,7 +75,7 @@ function ChatPanel({
 	async function loadMessages({ silent = false }: { silent?: boolean } = {}) {
 		try {
 			if (!silent) setHistoryLoading(true);
-			const res = await fetch(`/api/chat?notebookId=${notebookId}`);
+			const res = await fetch(`/api/chat?workspaceId=${workspaceId}`);
 			if (!res.ok) return;
 			const data = await res.json();
 			if (Array.isArray(data.messages)) {
@@ -75,11 +113,11 @@ function ChatPanel({
 	}
 
 	useEffect(() => {
-		if (historyLoadedFor.current === notebookId) return;
-		historyLoadedFor.current = notebookId;
+		if (historyLoadedFor.current === workspaceId) return;
+		historyLoadedFor.current = workspaceId;
 		loadMessages();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [notebookId]);
+	}, [workspaceId]);
 
 	useEffect(() => {
 		bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -103,42 +141,62 @@ function ChatPanel({
 			},
 		]);
 
-		const res = await fetch("/api/chat", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ notebookId, question }),
-		});
+		let streamedContent = "";
 
-		if (!res.ok || !res.body) {
-			setMsgs((m) => {
-				const copy = [...m];
-				const last = copy[copy.length - 1];
-				if (last) {
-					last.content = "Sorry, something went wrong. Please try again.";
-					last.streaming = false;
-				}
-				return copy;
+		try {
+			const res = await fetch("/api/chat", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ workspaceId, question }),
 			});
-			setLoading(false);
-			return;
-		}
 
-		const reader = res.body.getReader();
-		const decoder = new TextDecoder();
-		let buffer = "";
-		let citationsAcc: Citation[] = [];
+			const contentType = res.headers.get("content-type") || "";
 
-		while (true) {
-			const { done, value } = await reader.read();
-			if (done) break;
-			buffer += decoder.decode(value, { stream: true });
+			if (!res.ok) {
+				setMsgs((m) =>
+					updateLastAssistant(m, (last) => ({
+						...last,
+						content: "Sorry, something went wrong. Please try again.",
+						streaming: false,
+					})),
+				);
+				return;
+			}
 
-			let boundary = buffer.indexOf("\n\n");
-			while (boundary !== -1) {
-				const chunk = buffer.slice(0, boundary);
-				buffer = buffer.slice(boundary + 2);
-				boundary = buffer.indexOf("\n\n");
+			// Some chat paths (e.g. no matching sources) return JSON instead of SSE.
+			if (contentType.includes("application/json")) {
+				const data = await res.json();
+				setMsgs((m) =>
+					updateLastAssistant(m, (last) => ({
+						...last,
+						content:
+							data.answer ||
+							data.error ||
+							"Sorry, something went wrong. Please try again.",
+						citations: data.citations || [],
+						streaming: false,
+					})),
+				);
+				return;
+			}
 
+			if (!res.body) {
+				setMsgs((m) =>
+					updateLastAssistant(m, (last) => ({
+						...last,
+						content: "Sorry, something went wrong. Please try again.",
+						streaming: false,
+					})),
+				);
+				return;
+			}
+
+			const reader = res.body.getReader();
+			const decoder = new TextDecoder();
+			let buffer = "";
+			let citationsAcc: Citation[] = [];
+
+			const consumeSseChunk = (chunk: string) => {
 				for (const line of chunk.split("\n")) {
 					if (!line.startsWith("data: ")) continue;
 					const payload = line.slice(6);
@@ -147,44 +205,78 @@ function ChatPanel({
 					try {
 						const parsed = JSON.parse(payload);
 						if (parsed.token) {
-							setMsgs((m) => {
-								const copy = [...m];
-								const last = copy[copy.length - 1];
-								if (last && last.role === "assistant") {
-									last.content += parsed.token;
-								}
-								return copy;
-							});
+							streamedContent += parsed.token;
+							setMsgs((m) =>
+								updateLastAssistant(m, (last) => ({
+									...last,
+									content: last.content + parsed.token,
+								})),
+							);
 						}
 						if (parsed.citations) {
 							citationsAcc = parsed.citations;
-							setMsgs((m) => {
-								const copy = [...m];
-								const last = copy[copy.length - 1];
-								if (last && last.role === "assistant") {
-									last.citations = parsed.citations;
-								}
-								return copy;
-							});
+							setMsgs((m) =>
+								updateLastAssistant(m, (last) => ({
+									...last,
+									citations: parsed.citations,
+								})),
+							);
 						}
 					} catch {
 						// Ignore malformed SSE payloads.
 					}
 				}
-			}
-		}
+			};
 
-		setMsgs((m) => {
-			const copy = [...m];
-			const last = copy[copy.length - 1];
-			if (last && last.role === "assistant") {
-				last.streaming = false;
-				last.citations = citationsAcc;
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
+				buffer += decoder.decode(value, { stream: true });
+
+				let boundary = buffer.indexOf("\n\n");
+				while (boundary !== -1) {
+					const chunk = buffer.slice(0, boundary);
+					buffer = buffer.slice(boundary + 2);
+					consumeSseChunk(chunk);
+					boundary = buffer.indexOf("\n\n");
+				}
 			}
-			return copy;
-		});
-		await loadMessages({ silent: true });
-		setLoading(false);
+
+			if (buffer.trim()) consumeSseChunk(buffer);
+
+			setMsgs((m) =>
+				updateLastAssistant(m, (last) => ({
+					...last,
+					streaming: false,
+					citations: citationsAcc,
+				})),
+			);
+
+			// Stream dropped or returned no tokens, but the server may have saved
+			// the assistant message already — pull it from history.
+			if (!streamedContent) {
+				await loadMessages({ silent: true });
+			}
+		} catch {
+			if (!streamedContent) {
+				await loadMessages({ silent: true });
+			}
+			setMsgs((m) => {
+				const last = m[m.length - 1];
+				if (last?.role === "assistant" && last.streaming) {
+					return updateLastAssistant(m, (msg) => ({
+						...msg,
+						content:
+							msg.content ||
+							"Sorry, something went wrong. Please try again.",
+						streaming: false,
+					}));
+				}
+				return updateLastAssistant(m, (msg) => ({ ...msg, streaming: false }));
+			});
+		} finally {
+			setLoading(false);
+		}
 	}
 
 	return (
@@ -214,8 +306,8 @@ function ChatPanel({
 						}
 						description={
 							hasSources
-								? "Every answer will be grounded in your notebook's sources, with citations you can inspect."
-								: "PustakLM only answers from what you upload — no source, no answer."
+								? "Every answer will be grounded in your workspace's sources, with citations you can inspect."
+								: "LearnForge only answers from what you upload — no source, no answer."
 						}
 					/>
 				) : (
@@ -242,12 +334,12 @@ function ChatPanel({
 												<Sparkles className="h-3 w-3" />
 											</span>
 											<span className="text-xs font-medium text-fg-tertiary">
-												PustakLM
+												LearnForge
 											</span>
 										</div>
 									)}
 									<p className="whitespace-pre-wrap leading-relaxed text-fg">
-										{m.content}
+										{renderContentWithCitations(m.content, m.citations, setOpenCitation)}
 										{m.streaming && (
 											<span className="ml-1 inline-block h-4 w-1 animate-blink bg-accent align-middle" />
 										)}
@@ -276,7 +368,12 @@ function ChatPanel({
 					<input
 						value={input}
 						onChange={(e) => setInput(e.target.value)}
-						onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && ask()}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" && !e.shiftKey) {
+								e.preventDefault();
+								ask();
+							}
+						}}
 						placeholder={
 							hasSources
 								? "Ask a question about your sources..."

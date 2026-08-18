@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { notebooks } from "@/lib/schema";
+import { workspaces } from "@/lib/schema";
 import { getSessionUserId } from "@/lib/auth";
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
@@ -10,13 +10,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const { title } = await req.json();
   const [updated] = await db
-    .update(notebooks)
+    .update(workspaces)
     .set({ title: title?.slice(0, 120) })
-    .where(and(eq(notebooks.id, params.id), eq(notebooks.userId, userId)))
+    .where(and(eq(workspaces.id, params.id), eq(workspaces.userId, userId)))
     .returning();
 
   if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ notebook: updated });
+  return NextResponse.json({ workspace: updated });
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
@@ -25,7 +25,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
 
   // Sources + messages cascade-delete via FK constraints. Note: this does not
   // delete the corresponding vectors in Qdrant - in production, also call
-  // deleteSourceChunks for every source in this notebook before deleting it.
-  await db.delete(notebooks).where(and(eq(notebooks.id, params.id), eq(notebooks.userId, userId)));
+  // deleteSourceChunks for every source in this workspace before deleting it.
+  await db.delete(workspaces).where(and(eq(workspaces.id, params.id), eq(workspaces.userId, userId)));
   return NextResponse.json({ ok: true });
 }

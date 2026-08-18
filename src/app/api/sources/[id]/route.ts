@@ -32,7 +32,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
 
   indexSource({
     sourceId: source.id,
-    notebookId: source.notebookId,
+    workspaceId: source.workspaceId,
     userId,
     qdrantCollection: user.qdrantCollection,
     type: source.type,

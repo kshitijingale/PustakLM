@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
-export default function CreateNotebookDialog({
+export default function CreateWorkspaceDialog({
   open,
   onOpenChange,
   onCreated,
@@ -28,15 +28,15 @@ export default function CreateNotebookDialog({
   async function create() {
     if (!title.trim() || busy) return;
     setBusy(true);
-    const res = await fetch("/api/notebooks", {
+    const res = await fetch("/api/workspaces", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: title.trim() }),
     });
     setBusy(false);
     if (res.ok) {
-      const { notebook } = await res.json();
-      onCreated(notebook.id);
+      const { workspace } = await res.json();
+      onCreated(workspace.id);
       onOpenChange(false);
       setTitle("");
     }
@@ -46,9 +46,9 @@ export default function CreateNotebookDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent contentClassName="max-w-md">
         <DialogHeader>
-          <DialogTitle>Create notebook</DialogTitle>
+          <DialogTitle>Create workspace</DialogTitle>
           <DialogDescription>
-            Give your notebook a name to organize your sources and conversations.
+            Give your workspace a name to organize your sources and conversations.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">

@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 
 export default function Sidebar({
-  notebookId,
+  workspaceId,
   sources,
   activeSourceId,
   onSelectSource,
@@ -20,7 +20,7 @@ export default function Sidebar({
   onToggleCollapse,
   onClose,
 }: {
-  notebookId: string;
+  workspaceId: string;
   sources: Source[];
   activeSourceId: string | null;
   onSelectSource: (id: string | null) => void;
@@ -58,7 +58,7 @@ export default function Sidebar({
             className="group inline-flex items-center gap-2 rounded-xl border border-border bg-surface-elevated/60 px-3 py-1.5 text-sm font-medium text-fg-secondary transition-all duration-200 hover:border-accent/40 hover:bg-accent/10 hover:text-accent hover:shadow-glow"
           >
             <ArrowLeft className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
-            All notebooks
+            All workspaces
           </Link>
 
         )}
@@ -126,7 +126,7 @@ export default function Sidebar({
           <EmptyState
             icon={<FileText className="h-7 w-7" />}
             title="No sources yet"
-            description="Add a PDF, link, or transcript to start building your notebook."
+            description="Add a PDF, link, or transcript to start building your workspace."
             className="py-8"
           />
         ) : (
@@ -144,7 +144,7 @@ export default function Sidebar({
       </div>
 
       {showAdd && (
-        <AddSourceModal notebookId={notebookId} onClose={() => setShowAdd(false)} onAdded={onRefresh} />
+        <AddSourceModal workspaceId={workspaceId} onClose={() => setShowAdd(false)} onAdded={onRefresh} />
       )}
     </aside>
   );

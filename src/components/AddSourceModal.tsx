@@ -23,11 +23,11 @@ const TYPES = [
 ];
 
 export default function AddSourceModal({
-  notebookId,
+  workspaceId,
   onClose,
   onAdded,
 }: {
-  notebookId: string;
+  workspaceId: string;
   onClose: () => void;
   onAdded: () => void;
 }) {
@@ -48,14 +48,14 @@ export default function AddSourceModal({
         if (!file) throw new Error("Choose a file first");
         const form = new FormData();
         form.append("type", type);
-        form.append("notebookId", notebookId);
+        form.append("workspaceId", workspaceId);
         form.append("file", file);
         res = await fetch("/api/sources", { method: "POST", body: form });
       } else {
         res = await fetch("/api/sources", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type, notebookId, text, url }),
+          body: JSON.stringify({ type, workspaceId, text, url }),
         });
       }
       if (!res.ok) throw new Error((await res.json()).error || "Failed to add source");

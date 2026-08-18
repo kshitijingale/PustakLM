@@ -28,17 +28,17 @@ export const oauthAccounts = pgTable(
   })
 );
 
-export const notebooks = pgTable("notebooks", {
+export const workspaces = pgTable("workspaces", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  title: text("title").notNull().default("Untitled Notebook"),
+  title: text("title").notNull().default("Untitled Workspace"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // status: "uploading" | "indexing" | "ready" | "failed"
 export const sources = pgTable("sources", {
   id: uuid("id").defaultRandom().primaryKey(),
-  notebookId: uuid("notebook_id").notNull().references(() => notebooks.id, { onDelete: "cascade" }),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   type: text("type").notNull(), // pdf | text | url | youtube | vtt
   title: text("title").notNull(),
   // original reference: file path, URL, or raw text pointer
@@ -53,7 +53,7 @@ export const sources = pgTable("sources", {
 
 export const messages = pgTable("messages", {
   id: uuid("id").defaultRandom().primaryKey(),
-  notebookId: uuid("notebook_id").notNull().references(() => notebooks.id, { onDelete: "cascade" }),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   role: text("role").notNull(), // user | assistant
   content: text("content").notNull(),
   // citations: [{ sourceId, sourceTitle, chunkText, chunkIndex, page?, timestamp? }]

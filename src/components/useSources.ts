@@ -9,7 +9,7 @@ function sameSources(a: Source[], b: Source[]) {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-// Owns the source list for a notebook: initial load, manual refresh, and the
+// Owns the source list for a workspace: initial load, manual refresh, and the
 // 3s polling that keeps status dots live while anything is uploading/indexing.
 //
 // Two guarantees that keep the rest of the page (especially the chat) stable:
@@ -18,7 +18,7 @@ function sameSources(a: Source[], b: Source[]) {
 //  2. The interval inspects a ref mirror of the latest sources instead of
 //     running a side effect inside a setState updater (which StrictMode
 //     double-invokes, causing duplicate fetches in dev).
-export function useSources(notebookId: string) {
+export function useSources(workspaceId: string) {
   const [sources, setSources] = useState<Source[]>([]);
   const [loading, setLoading] = useState(true);
   const sourcesRef = useRef<Source[]>([]);
@@ -29,7 +29,7 @@ export function useSources(notebookId: string) {
 
   const loadSources = useCallback(async () => {
     try {
-      const res = await fetch(`/api/sources?notebookId=${notebookId}`);
+      const res = await fetch(`/api/sources?workspaceId=${workspaceId}`);
       if (res.ok) {
         const data = await res.json();
         const next: Source[] = Array.isArray(data.sources) ? data.sources : [];
@@ -40,7 +40,7 @@ export function useSources(notebookId: string) {
     } finally {
       setLoading(false);
     }
-  }, [notebookId]);
+  }, [workspaceId]);
 
   useEffect(() => {
     loadSources();

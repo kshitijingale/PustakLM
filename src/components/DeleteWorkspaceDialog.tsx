@@ -11,14 +11,14 @@ import {
 } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 
-export default function DeleteNotebookDialog({
-  notebookId,
+export default function DeleteWorkspaceDialog({
+  workspaceId,
   title,
   open,
   onOpenChange,
   onDeleted,
 }: {
-  notebookId: string;
+  workspaceId: string;
   title: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -29,7 +29,7 @@ export default function DeleteNotebookDialog({
   async function remove() {
     if (busy) return;
     setBusy(true);
-    const res = await fetch(`/api/notebooks/${notebookId}`, { method: "DELETE" });
+    const res = await fetch(`/api/workspaces/${workspaceId}`, { method: "DELETE" });
     setBusy(false);
     if (res.ok) {
       onDeleted();
@@ -41,7 +41,7 @@ export default function DeleteNotebookDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent contentClassName="max-w-md">
         <DialogHeader>
-          <DialogTitle>Delete notebook</DialogTitle>
+          <DialogTitle>Delete workspace</DialogTitle>
           <DialogDescription>
             Delete &ldquo;{title}&rdquo;? This cannot be undone.
           </DialogDescription>

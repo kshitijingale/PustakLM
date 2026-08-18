@@ -65,7 +65,7 @@ async function extractSegments(
 // "ready" (or "failed" with an error message the UI can show).
 export async function indexSource(params: {
   sourceId: string;
-  notebookId: string;
+  workspaceId: string;
   userId: string;
   qdrantCollection: string;
   type: string;
@@ -73,7 +73,7 @@ export async function indexSource(params: {
   rawText?: string;
   titleOverride?: string;
 }) {
-  const { sourceId, notebookId, qdrantCollection, type, originRef, rawText, titleOverride } = params;
+  const { sourceId, workspaceId, qdrantCollection, type, originRef, rawText, titleOverride } = params;
 
   await db.update(sources).set({ status: "indexing" }).where(eq(sources.id, sourceId));
 
@@ -103,7 +103,7 @@ export async function indexSource(params: {
       id: uuidv4(),
       vector: vectors[i],
       payload: {
-        notebookId,
+        workspaceId,
         sourceId,
         sourceTitle: sanitizeText(finalTitle),
         sourceType: type,

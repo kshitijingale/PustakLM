@@ -11,7 +11,11 @@ export default function ThemeToggle({ className }: { className?: string }) {
 
   useEffect(() => {
     setMounted(true);
-    const saved = (localStorage.getItem("pustaklm-theme") as "dark" | "light") || "dark";
+    // Migrate legacy theme key so existing users keep their preference.
+    const saved =
+      (localStorage.getItem("learnforge-theme") as "dark" | "light") ||
+      (localStorage.getItem("pustaklm-theme") as "dark" | "light") ||
+      "dark";
     setTheme(saved);
   }, []);
 
@@ -19,7 +23,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
     const next = theme === "dark" ? "light" : "dark";
     document.documentElement.classList.remove(theme);
     document.documentElement.classList.add(next);
-    localStorage.setItem("pustaklm-theme", next);
+    localStorage.setItem("learnforge-theme", next);
     setTheme(next);
   }
 

@@ -8,8 +8,8 @@ import ChatPanel from "@/components/ChatPanel";
 import SourceDetailPanel from "@/components/SourceDetailPanel";
 import ThemeToggle from "@/components/ThemeToggle";
 import LogoutButton from "@/components/LogoutButton";
-import RenameNotebookDialog from "@/components/RenameNotebookDialog";
-import DeleteNotebookDialog from "@/components/DeleteNotebookDialog";
+import RenameWorkspaceDialog from "@/components/RenameWorkspaceDialog";
+import DeleteWorkspaceDialog from "@/components/DeleteWorkspaceDialog";
 import { useSources } from "@/components/useSources";
 import { Logo } from "@/components/icons/Logo";
 import { Button } from "@/components/ui/Button";
@@ -20,9 +20,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
 
-export default function NotebookPage({ params }: { params: { id: string } }) {
+export default function WorkspacePage({ params }: { params: { id: string } }) {
   const { sources, loading, refresh } = useSources(params.id);
-  const [notebookTitle, setNotebookTitle] = useState("Notebook");
+  const [workspaceTitle, setWorkspaceTitle] = useState("Workspace");
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(false);
@@ -34,15 +34,15 @@ export default function NotebookPage({ params }: { params: { id: string } }) {
   const hasReadySources = sources.some((s) => s.status === "ready");
 
   useEffect(() => {
-    async function loadNotebook() {
-      const res = await fetch("/api/notebooks");
+    async function loadWorkspace() {
+      const res = await fetch("/api/workspaces");
       if (res.ok) {
-        const { notebooks } = await res.json();
-        const current = notebooks.find((n: any) => n.id === params.id);
-        if (current) setNotebookTitle(current.title);
+        const { workspaces } = await res.json();
+        const current = workspaces.find((w: any) => w.id === params.id);
+        if (current) setWorkspaceTitle(current.title);
       }
     }
-    loadNotebook();
+    loadWorkspace();
   }, [params.id]);
 
   async function removeSource(id: string) {
@@ -66,7 +66,7 @@ export default function NotebookPage({ params }: { params: { id: string } }) {
         >
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent/30 border-t-accent" />
           <div>
-            <p className="text-sm font-medium text-fg">Loading notebook...</p>
+            <p className="text-sm font-medium text-fg">Loading workspace...</p>
             <p className="text-xs text-fg-tertiary">Fetching sources and conversation history</p>
           </div>
         </motion.div>
@@ -89,7 +89,7 @@ export default function NotebookPage({ params }: { params: { id: string } }) {
           <Logo className="hidden h-7 w-7 shrink-0 sm:block" />
           <div className="min-w-0">
             <h1 className="truncate font-serif text-base font-semibold tracking-tight text-fg">
-              {notebookTitle}
+              {workspaceTitle}
             </h1>
           </div>
           <DropdownMenu modal={false}>
@@ -130,7 +130,7 @@ export default function NotebookPage({ params }: { params: { id: string } }) {
         {/* Desktop sidebar */}
         <div className="hidden md:block">
           <Sidebar
-            notebookId={params.id}
+            workspaceId={params.id}
             sources={sources}
             activeSourceId={activeSourceId}
             onSelectSource={(id) => {
@@ -162,7 +162,7 @@ export default function NotebookPage({ params }: { params: { id: string } }) {
                 className="fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] md:hidden"
               >
                 <Sidebar
-                  notebookId={params.id}
+                  workspaceId={params.id}
                   sources={sources}
                   activeSourceId={activeSourceId}
                   onSelectSource={(id) => {
@@ -223,20 +223,20 @@ export default function NotebookPage({ params }: { params: { id: string } }) {
 
         {/* Chat */}
         <div className="flex-1 min-w-0">
-          <ChatPanel notebookId={params.id} hasSources={hasReadySources} />
+          <ChatPanel workspaceId={params.id} hasSources={hasReadySources} />
         </div>
       </div>
 
-      <RenameNotebookDialog
-        notebookId={params.id}
+      <RenameWorkspaceDialog
+        workspaceId={params.id}
         open={showRename}
         onOpenChange={setShowRename}
-        currentTitle={notebookTitle}
-        onRenamed={setNotebookTitle}
+        currentTitle={workspaceTitle}
+        onRenamed={setWorkspaceTitle}
       />
-      <DeleteNotebookDialog
-        notebookId={params.id}
-        title={notebookTitle}
+      <DeleteWorkspaceDialog
+        workspaceId={params.id}
+        title={workspaceTitle}
         open={showDelete}
         onOpenChange={setShowDelete}
         onDeleted={() => {

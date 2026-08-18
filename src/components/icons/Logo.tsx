@@ -11,27 +11,31 @@ export function Logo({ className }: { className?: string }) {
       className={cn("h-8 w-8", className)}
       aria-hidden="true"
     >
-      <rect width="32" height="32" rx="8" className="fill-accent" />
+      <defs>
+        <linearGradient id="forgeGradient" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FF9D5C" />
+          <stop offset="100%" stopColor="#E87B35" />
+        </linearGradient>
+      </defs>
+      <rect width="32" height="32" rx="8" fill="url(#forgeGradient)" />
+      {/* Anvil / open book base */}
       <path
-        d="M9 9.5C9 8.67157 9.67157 8 10.5 8H14.5C15.3284 8 16 8.67157 16 9.5V22.5C16 23.3284 15.3284 24 14.5 24H10.5C9.67157 24 9 23.3284 9 22.5V9.5Z"
+        d="M6 22c0-1.1.9-2 2-2h16c1.1 0 2 .9 2 2v1H6v-1Z"
         className="fill-white/90"
       />
       <path
-        d="M17 9.5C17 8.67157 17.6716 8 18.5 8H22.5C23.3284 8 24 8.67157 24 9.5V22.5C24 23.3284 23.3284 24 22.5 24H18.5C17.6716 24 17 23.3284 17 22.5V9.5Z"
-        className="fill-white/60"
-      />
-      <path
-        d="M11 12H14M11 15.5H14M11 19H13.5"
-        stroke="#161412"
-        strokeWidth="1.2"
+        d="M9 21v-4c0-.55.45-1 1-1h12c.55 0 1 .45 1 1v4"
+        className="stroke-white/70"
+        strokeWidth="1.5"
         strokeLinecap="round"
+        fill="none"
       />
+      {/* Ember / spark rising */}
       <path
-        d="M19 12H22M19 15.5H22M19 19H21.5"
-        stroke="#161412"
-        strokeWidth="1.2"
-        strokeLinecap="round"
+        d="M16 9c-.5 1.5-2.5 4-2.5 6.5a2.5 2.5 0 0 0 5 0C18.5 13 16.5 10.5 16 9Z"
+        className="fill-white"
       />
+      <circle cx="16" cy="15.5" r="1.2" className="fill-accent" />
     </svg>
   );
 }

@@ -12,7 +12,7 @@ export async function createUser(email: string, passwordHash: string | null) {
   const qdrantCollection = `user_${uuidv4()}`;
 
   // Every user gets an isolated Qdrant collection created up-front, so their
-  // notebooks' vectors never mix with any other user's data.
+  // workspaces' vectors never mix with any other user's data.
   await ensureUserCollection(qdrantCollection);
 
   const [user] = await db.insert(users).values({ email, passwordHash, qdrantCollection }).returning();

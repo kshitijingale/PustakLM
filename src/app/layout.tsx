@@ -16,8 +16,8 @@ const sourceSerif = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
-  title: "PustakLM — Your library. Now conversational.",
-  description: "An AI research assistant that answers from your own sources, with citations.",
+  title: "LearnForge — Turn sources into understanding.",
+  description: "Create workspaces from your sources, ask questions, and get cited answers grounded in what you upload.",
 };
 
 // Dark mode is the primary experience. We read a saved preference before
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 const themeScript = `
 (function() {
   try {
-    var saved = localStorage.getItem('pustaklm-theme');
+    var saved = localStorage.getItem('learnforge-theme') || localStorage.getItem('pustaklm-theme');
     var theme = saved || 'dark';
     document.documentElement.classList.add(theme);
   } catch (e) {}

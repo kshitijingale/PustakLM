@@ -3,23 +3,23 @@
 import Link from "next/link";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { BookOpen, Calendar, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Layers, Calendar, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu";
-import RenameNotebookDialog from "@/components/RenameNotebookDialog";
-import DeleteNotebookDialog from "@/components/DeleteNotebookDialog";
+import RenameWorkspaceDialog from "@/components/RenameWorkspaceDialog";
+import DeleteWorkspaceDialog from "@/components/DeleteWorkspaceDialog";
 import { cn } from "@/lib/utils";
 
-export default function NotebookCard({
-  notebook,
+export default function WorkspaceCard({
+  workspace,
   onDelete,
   onRename,
 }: {
-  notebook: { id: string; title: string; createdAt: string };
+  workspace: { id: string; title: string; createdAt: string };
   onDelete: (id: string) => void;
   onRename: (id: string, title: string) => void;
 }) {
@@ -35,16 +35,16 @@ export default function NotebookCard({
       className="group card relative overflow-hidden p-5 transition-shadow duration-300 hover:shadow-glow"
     >
       <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-accent/5 blur-2xl transition-opacity group-hover:opacity-100" />
-      <Link href={`/notebook/${notebook.id}`} className="relative block">
+      <Link href={`/workspace/${workspace.id}`} className="relative block">
         <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/15 text-accent shadow-sm transition-transform duration-300 group-hover:scale-105 group-hover:shadow-glow">
-          <BookOpen className="h-6 w-6" />
+          <Layers className="h-6 w-6" />
         </div>
         <h3 className="truncate font-serif text-lg font-semibold tracking-tight text-fg">
-          {notebook.title}
+          {workspace.title}
         </h3>
         <div className="mt-2 flex items-center gap-1.5 text-xs text-fg-tertiary">
           <Calendar className="h-3.5 w-3.5" />
-          {new Date(notebook.createdAt).toLocaleDateString(undefined, {
+          {new Date(workspace.createdAt).toLocaleDateString(undefined, {
             year: "numeric",
             month: "short",
             day: "numeric",
@@ -73,19 +73,19 @@ export default function NotebookCard({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <RenameNotebookDialog
-        notebookId={notebook.id}
+      <RenameWorkspaceDialog
+        workspaceId={workspace.id}
         open={showRename}
         onOpenChange={setShowRename}
-        currentTitle={notebook.title}
-        onRenamed={(title) => onRename(notebook.id, title)}
+        currentTitle={workspace.title}
+        onRenamed={(title) => onRename(workspace.id, title)}
       />
-      <DeleteNotebookDialog
-        notebookId={notebook.id}
-        title={notebook.title}
+      <DeleteWorkspaceDialog
+        workspaceId={workspace.id}
+        title={workspace.title}
         open={showDelete}
         onOpenChange={setShowDelete}
-        onDeleted={() => onDelete(notebook.id)}
+        onDeleted={() => onDelete(workspace.id)}
       />
     </motion.div>
   );

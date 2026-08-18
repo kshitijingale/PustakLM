@@ -12,9 +12,9 @@ export const qdrant = new QdrantClient({
 const EMBEDDING_DIM = 1536; // text-embedding-3-small
 
 // Every user gets their own collection (e.g. "user_<uuid>") so one user's
-// notebooks can never leak into another user's vector search. Inside a
-// collection, we further scope by notebookId + sourceId in the point payload
-// so each notebook's retrieval only searches its own sources.
+// workspaces can never leak into another user's vector search. Inside a
+// collection, we further scope by workspaceId + sourceId in the point payload
+// so each workspace's retrieval only searches its own sources.
 export async function ensureUserCollection(collectionName: string) {
   const collections = await qdrant.getCollections();
   const exists = collections.collections.some((c) => c.name === collectionName);
@@ -30,13 +30,12 @@ export async function ensureUserCollection(collectionName: string) {
   // an index that already exists is a no-op, so this is safe to call every
   // time - it also backfills indexes onto collections created before this
   // fix was added.
-  await qdrant.createPayloadIndex(collectionName, { field_name: "notebookId", field_schema: "keyword" });
+  await qdrant.createPayloadIndex(collectionName, { field_name: "workspaceId", field_schema: "keyword" });
   await qdrant.createPayloadIndex(collectionName, { field_name: "sourceId", field_schema: "keyword" });
-  
 }
 
 export type ChunkPayload = {
-  notebookId: string;
+  workspaceId: string;
   sourceId: string;
   sourceTitle: string;
   sourceType: string;
@@ -56,14 +55,14 @@ export async function upsertChunks(
 
 export async function searchChunks(
   collectionName: string,
-  notebookId: string,
+  workspaceId: string,
   vector: number[],
   limit = 6
 ) {
   const result = await qdrant.search(collectionName, {
     vector,
     limit,
-    filter: { must: [{ key: "notebookId", match: { value: notebookId } }] },
+    filter: { must: [{ key: "workspaceId", match: { value: workspaceId } }] },
     with_payload: true,
   });
   return result.map((r) => ({ score: r.score, payload: r.payload as unknown as ChunkPayload }));

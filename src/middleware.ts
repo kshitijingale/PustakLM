@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 // API routes do their own auth check (getSessionUserId) so they stay
 // protected even if this middleware is bypassed.
 export function middleware(req: NextRequest) {
-  const hasSession = req.cookies.has("pustaklm_session");
+  const hasSession = req.cookies.has("learnforge_session");
   const isLoginPage = req.nextUrl.pathname === "/login";
 
   if (!hasSession && !isLoginPage) {
@@ -17,5 +17,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/notebook/:path*", "/login"],
+  matcher: ["/", "/workspace/:path*", "/login"],
 };

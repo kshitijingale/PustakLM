@@ -13,7 +13,7 @@ import type { NextRequest } from "next/server";
 
 export type OAuthProvider = "google" | "github";
 
-export const OAUTH_STATE_COOKIE = "pustaklm_oauth_state";
+export const OAUTH_STATE_COOKIE = "learnforge_oauth_state";
 
 // The OAuth redirect_uri must live on the same host the user started the
 // flow from — otherwise the provider bounces them to a different host and
@@ -149,7 +149,7 @@ async function fetchGitHubProfile(accessToken: string): Promise<OAuthProfile | n
   const headers = {
     Authorization: `Bearer ${accessToken}`,
     Accept: "application/vnd.github+json",
-    "User-Agent": "pustaklm", // GitHub rejects API calls without a UA header
+    "User-Agent": "learnforge", // GitHub rejects API calls without a UA header
   };
   const userRes = await fetch("https://api.github.com/user", { headers });
   if (!userRes.ok) throw new Error(`github /user failed (${userRes.status})`);

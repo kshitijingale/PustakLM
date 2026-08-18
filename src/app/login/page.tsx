@@ -3,7 +3,8 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { BookOpen, Loader2, Sparkles, Eye, EyeOff } from "lucide-react";
+import { Loader2, Sparkles, Eye, EyeOff } from "lucide-react";
+import { Logo } from "@/components/icons/Logo";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
@@ -112,10 +113,10 @@ export default function LoginPage() {
       >
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent shadow-glow">
-            <BookOpen className="h-7 w-7 text-white" />
+            <Logo className="h-8 w-8" />
           </div>
-          <h1 className="font-serif text-2xl font-semibold tracking-tight text-fg">PustakLM</h1>
-          <p className="mt-1 text-sm text-fg-secondary">Your library. Now conversational.</p>
+          <h1 className="font-serif text-2xl font-semibold tracking-tight text-fg">LearnForge</h1>
+          <p className="mt-1 text-sm text-fg-secondary">Turn sources into understanding.</p>
         </div>
 
         <div className="card p-6 sm:p-8">
