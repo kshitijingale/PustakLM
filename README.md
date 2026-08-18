@@ -81,8 +81,8 @@ promise); the UI polls source status every few seconds until it flips to `ready`
 **Indexing a source:**
 1. User adds a source (file upload or JSON body depending on type).
 2. A `sources` row is created with `status: "uploading"`.
-3. `indexSource()` runs: extracts raw text (per-type extractor in `lib/ingest/`), flips status
-   to `"indexing"`.
+3. `indexSource()` runs: extracts raw text (per-type extractor in `lib/ingest/`; web links
+   go through Firecrawl), flips status to `"indexing"`.
 4. Text is split into ~800-character chunks (120-char overlap) via LangChain's
    `RecursiveCharacterTextSplitter` — each chunk keeps a reference back to its page number
    (PDF) or timestamp (YouTube/VTT).
@@ -115,7 +115,7 @@ the transcript cue — so you always know exactly where an answer came from.
 - **File validation**: 20MB max, MIME allow-list (`pdf`, `vtt`, `text/plain`).
 - **Text length caps** on pasted text and chat questions.
 - **SSRF guard** on URL/YouTube sources: blocks `localhost`, `127.0.0.1`, link-local, and
-  private `192.168.x`/`10.x` addresses before fetching.
+  private `192.168.x`/`10.x` addresses before scraping via Firecrawl.
 - **Prompt-injection guardrail**: the system prompt explicitly tells the model to treat
   retrieved excerpts as data, never as instructions.
 - **Auth**: JWT session cookie (httpOnly, sameSite=lax) issued by either email/password
@@ -135,6 +135,7 @@ These are meant to be a reasonable baseline, not a production security audit —
 - A [Neon](https://neon.tech) Postgres database
 - A [Qdrant Cloud](https://cloud.qdrant.io) cluster (free tier works)
 - An [OpenAI API key](https://platform.openai.com)
+- A [Firecrawl](https://www.firecrawl.dev) API key (required for web-link sources)
 
 ### Steps
 
@@ -144,8 +145,8 @@ cd learnforge
 npm install
 
 cp .env.example .env
-# fill in DATABASE_URL, QDRANT_URL, QDRANT_API_KEY, OPENAI_API_KEY, JWT_SECRET
-# optional: add FIRECRAWL_API_KEY for better web-link scraping (falls back to cheerio otherwise)
+# fill in DATABASE_URL, QDRANT_URL, QDRANT_API_KEY, OPENAI_API_KEY,
+# FIRECRAWL_API_KEY (required for web links), JWT_SECRET
 
 npm run db:push   # creates tables in Neon via Drizzle
 npm run dev       # http://localhost:3000
@@ -163,7 +164,7 @@ Sign up on `/login`, create a workspace, add a source, and start asking question
 | `OPENAI_API_KEY` | OpenAI API key |
 | `OPENAI_EMBEDDING_MODEL` | default `text-embedding-3-small` |
 | `OPENAI_CHAT_MODEL` | default `gpt-4o-mini` |
-| `FIRECRAWL_API_KEY` | Firecrawl API key for web scraping (free tier at firecrawl.dev) |
+| `FIRECRAWL_API_KEY` | Required for URL sources. Firecrawl API key (free tier at firecrawl.dev) |
 | `JWT_SECRET` | random string for signing session cookies |
 | `NEXT_PUBLIC_APP_URL` | base URL, used for a few client-side links |
 
